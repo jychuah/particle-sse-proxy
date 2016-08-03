@@ -80,12 +80,12 @@ function start() {
             var payload = error;
             console.log(error);
             var privacy = body.isPrivate || false;
-            var publishEventPr = particle.publishEvent({ name: "sse", data: error, auth: body.access_token, isPrivate: privacy });
+            var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: error, auth: body.access_token, isPrivate: privacy });
             publishEventPr.then(destroy(body.device_id));
           }
 
           es.onopen = function(error) {
-            var publishEventPr = particle.publishEvent({ name: "sse", data: "open", auth: body.access_token, isPrivate: privacy });
+            var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: "open", auth: body.access_token, isPrivate: privacy });
           }
 
           es.onmessage = function(message) {
