@@ -1,3 +1,1 @@
-web: $WEB
-worker: $WORKER
-startup: $STARTUP
+web: node index.js
