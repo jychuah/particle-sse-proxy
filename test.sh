@@ -13,7 +13,7 @@ EVENT_SOURCE='http://localhost:8080/sse'
 # Events to subscribe to
 EVENTS='["server-time"]'
 # Headers
-HEADERS='{"Authorization", "Bearer mytoken"}'
+HEADERS='{"Authorization" : "Bearer mytoken"}'
 
 curl $HOST -H "Content-Type: application/json" -X POST -d @- <<EOF
 { 
@@ -21,6 +21,7 @@ curl $HOST -H "Content-Type: application/json" -X POST -d @- <<EOF
 	"access_token" : "$ACCESS_TOKEN", 
 	"event_source" : "$EVENT_SOURCE", 
 	"events" : $EVENTS,
-	"headers" : $HEADERS
+	"headers" : $HEADERS,
+	"isPrivate" : true
 }
 EOF
