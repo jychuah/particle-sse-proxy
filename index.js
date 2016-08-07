@@ -35,7 +35,7 @@ function start() {
   function verifyRequest(req, res, next) {
       var body = req.body;
       // Verify request has all fields
-      var properties = ['device_id', 'access_token', 'event_source'];
+      var properties = ['device_id', 'particle_token', 'event_source'];
       for (var index in properties) {
         if (!body.hasOwnProperty(properties[index])) {
           res.status(400).send("Missing property: " + properties[index]);
@@ -48,7 +48,7 @@ function start() {
 
   function verifyParticle(req, res, next) {
     var body = req.body;
-    var devicesPr = particle.getEventStream({ deviceId: body.device_id, auth: body.access_token });
+    var devicesPr = particle.getEventStream({ deviceId: body.device_id, auth: body.particle_token });
     devicesPr.then(
         // On successful stream
         function(stream) {
@@ -68,7 +68,7 @@ function start() {
         },
         // On unsuccessful stream
         function(error) {
-          // Couldn't validate device_id and access_token
+          // Couldn't validate device_id and particle_token
           // console.log(error);
           delete particleStreams[body.device_id];
           res.status(error.statusCode);
@@ -103,26 +103,26 @@ function start() {
         var payload = error;
         console.log(error);
         /*
-        var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: error, auth: body.access_token, isPrivate: privacy });
+        var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: error, auth: body.particle_token, isPrivate: privacy });
         publishEventPr.then(destroyStream(body.device_id));
         */
-        console.log("onerror", { name: "onerror", data: error, auth: body.access_token, isPrivate: privacy });
+        console.log("onerror", { name: "onerror", data: error, auth: body.particle_token, isPrivate: privacy });
         
       }
 
       es.onopen = function(error) {
-        // var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: "open", auth: body.access_token, isPrivate: privacy });
-        console.log("onopen", { name: "onopen", data: "open", auth: body.access_token, isPrivate: privacy });
+        // var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: "open", auth: body.particle_token, isPrivate: privacy });
+        console.log("onopen", { name: "onopen", data: "open", auth: body.particle_token, isPrivate: privacy });
       }
 
       es.onmessage = function(message) {
-        // var publishEventPr = particle.publishEvent({ name: message.event, data: message.data, auth: body.access_token, isPrivate: privacy });
-        console.log("onmessage", { name: "onmessage", data: message.data, auth: body.access_token, isPrivate: privacy });
+        // var publishEventPr = particle.publishEvent({ name: message.event, data: message.data, auth: body.particle_token, isPrivate: privacy });
+        console.log("onmessage", { name: "onmessage", data: message.data, auth: body.particle_token, isPrivate: privacy });
       }
 
       for (var key in body.events) {
         es.addEventListener(body.events[key], function(message) {
-          console.log("onmessage", { name: message.type, data: message.data, auth: body.access_token, isPrivate: privacy });
+          console.log("onmessage", { name: message.type, data: message.data, auth: body.particle_token, isPrivate: privacy });
         });
       }
 
