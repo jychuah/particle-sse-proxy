@@ -87,7 +87,13 @@ function start() {
 
   function createStream(req, res, next) {
       var body = req.body;
-      eventSources[body.device_id] = new EventSource(req.body.event_source);
+
+      var dict = { };
+      if (req.body.headers) {
+        dict.headers = req.body.headers;
+      }
+
+      eventSources[body.device_id] = new EventSource(req.body.event_source, dict);
       var es = eventSources[body.device_id];
       var privacy = body.isPrivate || false;
 

@@ -10,8 +10,17 @@ DEVICE_ID='YOUR_DEVICE_ID'
 ACCESS_TOKEN='YOUR_PARTICLE_ACCESS_TOKEN'
 # The URL of the Event Source
 EVENT_SOURCE='http://localhost:8080/sse'
+# Events to subscribe to
 EVENTS='["server-time"]'
+# Headers
+HEADERS='{"Authorization", "Bearer mytoken"}'
 
 curl $HOST -H "Content-Type: application/json" -X POST -d @- <<EOF
-{ "device_id" : "$DEVICE_ID", "access_token" : "$ACCESS_TOKEN", "event_source" : "$EVENT_SOURCE", "events" : $EVENTS }
+{ 
+	"device_id" : "$DEVICE_ID", 
+	"access_token" : "$ACCESS_TOKEN", 
+	"event_source" : "$EVENT_SOURCE", 
+	"events" : $EVENTS,
+	"headers" : $HEADERS
+}
 EOF
