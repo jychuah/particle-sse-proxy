@@ -36,4 +36,32 @@ Particle.subscribe("event1", event1Handler);
 Particle.subscribe("event2", event2Handler);
 Particle.publish("sse");
 ```
+### Deploying to Heroku
 
+I tested this reverse proxy on [Heroku](http://heroku.com). To setup Heroku, make sure you have command line `git`, the [Heroku Toolbelt](https://toolbelt.heroku.com/), and a verified account. To deploy this reverse proxy, do the following:
+
+- Clone this repo
+
+	```
+	git clone https://github.com/jychuah/particle-sse-proxy
+	cd particle-sse-proxy
+	```
+
+- Create a Heroku dyno and make a note of the endpoint. (Heroku services always run on port 80, so your `PORT` variable will be ignored.)
+
+	```
+	heroku login
+	heroku create
+	```
+
+- Push it to Heroku
+
+	```
+	git push heroku master
+	```
+	
+- Check to see if it's running with
+
+	```
+	heroku logs --tail
+	```

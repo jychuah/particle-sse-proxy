@@ -27,8 +27,6 @@
     "express": "^4.14.0",
     "foreman": "^1.4.1",
     "particle-api-js": "^5.3.0",
-    "serve-static": "^1.11.1",
-    "sse": "0.0.6",
     "throng": "^4.0.0"
   }
 }
