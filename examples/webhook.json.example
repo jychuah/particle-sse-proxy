@@ -1,0 +1,19 @@
+{
+    "event": "sse",
+    "url": "https://my.proxy",
+    "requestType": "PUT",
+    "headers" : {
+    	"Content-Type" : "text/json"
+    }
+    "json" : {
+		"device_id" : "{{PARTICLE_DEVICE_ID}}", 
+		"particle_token" : "YOUR_PARTICLE_ACCES_TOKEN", 
+		"event_source" : "https://my.eventsource.com/", 
+		"events" : ["event1", "event2"],
+		"headers" : {
+			"Authorization" : "Bearer my.eventsource.com.token"
+		},
+		"isPrivate" : true
+    },
+    "mydevices": true
+}

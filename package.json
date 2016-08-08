@@ -1,6 +1,6 @@
 {
   "name": "particle-sse-proxy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A reverse proxy that subscribes to a Server Sent Event source and publishes messages as Particle.io events",
   "main": "index.js",
   "scripts": {

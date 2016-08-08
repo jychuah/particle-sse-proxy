@@ -7,14 +7,6 @@ var fs = require('fs');
 
 var WORKERS = process.env.WEB_CONCURRENCY || 1;
 
-function destroyStream(device_id) {
-  particleStreams[device_id].end();
-  delete particleStreams[device_id];
-  eventSources[device_id].close();
-  delete eventSources[device_id];
-  console.log("Released resources for device: ", body.device_id);
-}
-
 function start() {
   var app = express();
 
@@ -25,34 +17,39 @@ function start() {
   var eventSources = { };
   var particleStreams = { };
 
-  destroyStream = function(device_id) {
-    particleStreams[device_id].end();
-    delete particleStreams[device_id];
-    eventSources[device_id].close();
-    delete eventSources[device_id];
+  function destroyStream(device_id) {
+    if (particleStreams[device_id]) {
+      particleStreams[device_id].end();
+      delete particleStreams[device_id];
+    }
+    if (eventSources[device_id]) {
+      eventSources[device_id].close();
+      delete eventSources[device_id];
+    }
     console.log("Released resources for device: ", body.device_id);
   }
 
 
   console.log("Environment: ", process.env);
 
-  app.put('/', function(req, res, next) {
-    try {
+  function verifyRequest(req, res, next) {
       var body = req.body;
       // Verify request has all fields
-      var properties = ['device_id', 'access_token', 'sse_source'];
+      var properties = ['device_id', 'particle_token', 'event_source'];
       for (var index in properties) {
         if (!body.hasOwnProperty(properties[index])) {
           res.status(400).send("Missing property: " + properties[index]);
+          res.end();
           return false;
         }
       }
+      next();
+  }
 
-      console.log("Received request from " + body.device_id);
-
-      // Try to get an event stream for the device, using provided device_id and access_token
-      var devicesPr = particle.getEventStream({ deviceId : body.device_id, auth: body.access_token });
-      devicesPr.then(
+  function verifyParticle(req, res, next) {
+    var body = req.body;
+    var devicesPr = particle.getEventStream({ deviceId: body.device_id, auth: body.particle_token });
+    devicesPr.then(
         // On successful stream
         function(stream) {
           // save stream
@@ -67,43 +64,91 @@ function start() {
               }
             }
           });
-
-          // Now that we have a Particle.io event stream for the device,
-          // go ahead and grab the requested event stream
-          if (!eventSources.hasOwnProperty(body.device_id)) {
-            eventSources[body.device_id] = new EventSource(body.sse_source);
-          }
-
-          var es = eventSources[body.device_id];
-
-          es.onerror = function(error) {
-            var payload = error;
-            console.log(error);
-            var privacy = body.isPrivate || false;
-            var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: error, auth: body.access_token, isPrivate: privacy });
-            publishEventPr.then(destroy(body.device_id));
-          }
-
-          es.onopen = function(error) {
-            var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: "open", auth: body.access_token, isPrivate: privacy });
-          }
-
-          es.onmessage = function(message) {
-            var publishEventPr = particle.publishEvent({ name: message.event, data: message.data, auth: body.access_token, isPrivate: privacy });
-          }
+          next();
         },
         // On unsuccessful stream
         function(error) {
-          // Couldn't validate device_id and access_token
+          // Couldn't validate device_id and particle_token
           // console.log(error);
           delete particleStreams[body.device_id];
           res.status(error.statusCode);
           res.send(error.body.error);
+          res.end();
         }
-      );
-    } catch(error) {
-      res.status(500).send("Oops! An unhandled particle-sse-proxy exception occurred: " + error);
-    }
+    );
+  }
+
+  function destroyPrevious(req, res, next) {
+      if (eventSources.hasOwnProperty(req.body.device_id)) {
+          destroyStream(req.body.device_id);
+      }
+      next();
+  }
+
+  function createStream(req, res, next) {
+      var body = req.body;
+
+      var dict = { };
+      if (req.body.headers) {
+        dict.headers = req.body.headers;
+      }
+
+      eventSources[body.device_id] = new EventSource(req.body.event_source, dict);
+      var es = eventSources[body.device_id];
+      var privacy = body.isPrivate || false;
+
+      console.log("events", body.events);
+
+      es.onerror = function(error) {
+        var payload = error;
+        console.log(error);
+        /*
+        var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: error, auth: body.particle_token, isPrivate: privacy });
+        publishEventPr.then(destroyStream(body.device_id));
+        */
+        console.log("onerror", { name: "onerror", data: error, auth: body.particle_token, isPrivate: privacy });
+        
+      }
+
+      es.onopen = function(error) {
+        // var publishEventPr = particle.publishEvent({ name: "sse_proxy", data: "open", auth: body.particle_token, isPrivate: privacy });
+        console.log("onopen", { name: "onopen", data: "open", auth: body.particle_token, isPrivate: privacy });
+      }
+
+      es.onmessage = function(message) {
+        // var publishEventPr = particle.publishEvent({ name: message.event, data: message.data, auth: body.particle_token, isPrivate: privacy });
+        console.log("onmessage", { name: "onmessage", data: message.data, auth: body.particle_token, isPrivate: privacy });
+      }
+
+      for (var key in body.events) {
+        es.addEventListener(body.events[key], function(message) {
+          console.log("onmessage", { name: message.type, data: message.data, auth: body.particle_token, isPrivate: privacy });
+        });
+      }
+
+      res.status(200).send("OK");
+      res.end();
+  }
+
+  app.use(verifyRequest);
+  app.use(verifyParticle);
+  app.use(destroyPrevious);
+
+
+  app.put('/', function(req, res, next) {
+      console.log("Received request from " + body.device_id);
+      app.use(createStream);
+      next();
+  });
+
+  function sendOk(req, res, next) {
+    res.status(200).send("OK");
+    res.end();
+  }
+
+  app.delete('/', function(req, res, next) {
+    app.use(sendOk);
+    next();
   });
 
 
