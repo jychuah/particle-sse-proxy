@@ -3,8 +3,8 @@
     "url": "https://my.proxy",
     "requestType": "PUT",
     "headers" : {
-    	"Content-Type" : "text/json"
-    }
+    	"Content-Type" : "application/json"
+    },
     "json" : {
 		"device_id" : "{{PARTICLE_DEVICE_ID}}", 
 		"particle_token" : "YOUR_PARTICLE_ACCES_TOKEN", 
